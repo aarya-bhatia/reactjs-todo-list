@@ -80,10 +80,10 @@ export function Todo({ todo, updateTodo } ) {
     return "";
 }
 
-export function TodoList({ todoList, updateTodo, filter }) {
-    return <ul>{todoList.filter(filter ? todo => filter(todo) : todo => todo.deleted == false).map(todo => 
-        <li>
-            <Todo key={todo.id} todo={todo} updateTodo={updateTodo} />
+export function TodoList({ todoList, updateTodo }) {
+    return <ul>{todoList.map(todo => 
+        <li key={todo.id}>
+            <Todo todo={todo} updateTodo={updateTodo} />
         </li>
     )}</ul>
 }
