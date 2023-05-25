@@ -1,26 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TodoList } from './Todo.js';
 
-const initialTodoItems = [
-    { id: 0, description: "Go shopping to the Mall", status: false, deleted: false },
-    { id: 1, description: "Go for a walk in the morning", status: true, deleted: false },
-    { id: 2, description: "Learn React.js basics", status: false, deleted: false },
-];
+// const initialTodoItems = [
+//     { id: 0, description: "Go shopping to the Mall", status: false, deleted: false },
+//     { id: 1, description: "Go for a walk in the morning", status: true, deleted: false },
+//     { id: 2, description: "Learn React.js basics", status: false, deleted: false },
+// ];
+
+const API_BASE_URL = "http://localhost:5000/todos";
 
 function App() {
-    const [todoItems, setTodoItems] = useState(initialTodoItems);
+    const [todoItems, setTodoItems] = useState([]);
     const [showDeletedTodos, setShowDeletedTodos] = useState(false);
     const [createTodoInputText, setCreateTodoInputText] = useState("");
     const [searchInput, setSearchInput] = useState("");
 
+    useEffect(() => {
+        fetch(API_BASE_URL)
+            .then(data => data.json())
+            .then(data => {
+                console.log(`Fetched ${data.length} todos from API`);
+
+                const newTodoItems = [...todoItems];
+
+                for(const todo of data) {
+                    let duplicate = false;
+                    for(const currentTodo of todoItems) {
+                        if(todo.id == currentTodo.id) {
+                            duplicate = true;
+                            break;
+                        }
+                    }
+                    if(!duplicate) {
+                        newTodoItems.push(todo);
+                    }
+                }
+
+                setTodoItems(newTodoItems);
+            })
+            .catch(err => console.log("Failed to fetch todos from API: ", err));
+    }, []);
+
     const onSubmit = (e) => {
         e.preventDefault();
-        setTodoItems([...todoItems, {
-            id: Math.random(),
+
+        const newTodoItem = {
+            id: Math.floor( Math.random() * 1e6 ),
             description: createTodoInputText,
             status: false,
             deleted: false
-        }]);
+        }
+
+        setTodoItems([...todoItems, newTodoItem]);
+
+        fetch(API_BASE_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newTodoItem)
+        })
     }
 
     const updateTodo = (id, data) => {
