@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TodoList } from './Todo.js';
 
 // const initialTodoItems = [
@@ -14,6 +14,7 @@ function App() {
     const [showDeletedTodos, setShowDeletedTodos] = useState(false);
     const [createTodoInputText, setCreateTodoInputText] = useState("");
     const [searchInput, setSearchInput] = useState("");
+    const createTodoInputRef = useRef(null);
 
     useEffect(() => {
         fetch(API_BASE_URL)
@@ -57,7 +58,9 @@ function App() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(newTodoItem)
-        })
+        }).then(response => console.log(response.status))
+
+        createTodoInputRef.current.value = "";
     }
 
     const updateTodo = (id, data) => {
@@ -73,6 +76,12 @@ function App() {
         }
 
         setTodoItems(newTodoItems);
+        fetch(API_BASE_URL + "/" + id, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        }).then(response => console.log(response.status))
+
     }
 
     const deletedTodoFilter = (todo) => {
@@ -81,6 +90,10 @@ function App() {
         } else {
             return todo.deleted == false;
         }
+    }
+
+    const saveTodos = () => {
+        fetch(API_BASE_URL + "/save").then(response => alert("Success")).catch(err => alert("Failure"));
     }
 
     const searchFilter = (todo) => {
@@ -115,6 +128,10 @@ function App() {
     const handleSearchInputChange = (e) => {
         setSearchInput(e.target.value);
     }
+    
+    const handleCreateTodoInputChange = (e) => {
+        setCreateTodoInputText(e.target.value)
+    } 
 
     return (
         <div className="App">
@@ -123,16 +140,19 @@ function App() {
                 Search: <input value={searchInput} onChange={handleSearchInputChange} placeholder="Search todos here..." type="text" ></input>
             </div>
             <br />
+            <button onClick={() => saveTodos()}>Save File</button>
+            <br />
             {showDeletedTodos ? 
                 <button onClick={() => setShowDeletedTodos(false)}>Hide Deleted</button>
                 :
                 <button onClick={() => setShowDeletedTodos(true)}>Show Deleted</button>
             }
+            <div style={{ backgroundColor: "transparent", height: 100, overflow: "auto", padding: 10, borderStyle: "solid", borderWidth: 1 }}>
             <TodoList todoList={todoItems.filter(deletedTodoFilter).filter(searchFilter)} updateTodo={updateTodo} />
-            <h2>Deleted</h2>
+            </div>
             <h2>Create Todo</h2>
             <form onSubmit={onSubmit} >
-                <input placeholder="Type todo here..." type="text" width={ 20 } height={ 20 } onChange={(e) => setCreateTodoInputText(e.target.value)} />
+                <input ref={createTodoInputRef} placeholder="Type todo here..." type="text" width={ 20 } height={ 20 } onChange={handleCreateTodoInputChange}/>
                 <input type="submit" value="Add" />
             </form>
         </div>
